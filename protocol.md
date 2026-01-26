@@ -1,6 +1,7 @@
 # Zero-Pole-Island 开发协议（Dev Protocol）
 
 目录
+0. 协作规范
 1. 原则
 2. 结构与命名
 3. 生命周期
@@ -15,7 +16,24 @@
 12. Realm（软/硬）
 13. 事件总线
 14. 存档
-15. MVP
+
+============================================================
+0. 协作规范
+============================================================
+0.1 Git 分支策略 (Simple Feature Branch)
+- main: 主分支，禁止直接 Push，必须通过 Pull Request (PR) 或 Merge。
+- feat/功能名: 功能开发分支（如 feat/player-movement）。
+- fix/bug名: 修复分支（如 fix/boss-crash）。
+- art/资源名: 美术资源导入分支。
+
+0.2 提交信息 (Commit Message)
+格式：(类型) 描述
+- (FEAT) 新功能 (Feature)
+- (FIX) 修复Bug
+- (ART) 美术资源/场景更新
+- (DOC) 文档/注释修改
+- (WIP) 开发中 (Work In Progress)
+示例：(FEAT) 实现Router角色的冲刺技能
 
 ============================================================
 1. 原则
@@ -61,6 +79,11 @@ public interface IMover {
   void Move(Vector2 input, float dt);
   void Teleport(Vector2 worldPos);
 }
+
+// 增加 Role 枚举
+public enum PlayerRole { None, Debugger, Circuiteer, Router }
+public enum EntityType { Player, Enemy, Boss, Loot, Interactable, Projectile }
+public enum Faction { Player, Neutral, Hostile }
 
 ActorBase 必选组件（必须挂载并缓存引用）：
 IMover / IHealth / ICombatant / IInventoryOwner / IAbilityOwner
@@ -151,7 +174,9 @@ public interface IInventory {
   event System.Action OnInventoryChanged;
   bool TryAdd(ItemInstance item);
   bool TryRemove(string itemId, int count);
+  bool HasItemType(ItemType type);
 }
+
 public interface IInventoryOwner { IInventory Inventory { get; } }
 
 ============================================================
@@ -205,6 +230,8 @@ public interface IRunResultService {
 ============================================================
 12. Realm（软/硬）
 ============================================================
+// Hardware: 对应设定中的物理层
+// Software: 对应设定中的虚拟层
 public enum RealmType { Hard, Soft }
 public interface IRealmSwitchListener { void OnEnterRealm(RealmType realm); }
 
@@ -219,6 +246,8 @@ public interface IEventBus {
 
 public readonly struct PlayerExtractedEvent { public readonly int PlayerId; public PlayerExtractedEvent(int id){PlayerId=id;} }
 public readonly struct BossDefeatedEvent { public readonly int BossId; public BossDefeatedEvent(int id){BossId=id;} }
+// 对应游戏时间2:00后的“震荡”事件
+public readonly struct VibrateEvent { public readonly float StabilityValue; public VibrateEvent(float v){StabilityValue=v;} }
 
 ============================================================
 14. 存档
@@ -228,7 +257,6 @@ public interface ISaveable {
   object CaptureState();
   void RestoreState(object state);
 }
-
 
 
 地图：
